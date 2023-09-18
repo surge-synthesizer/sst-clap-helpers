@@ -83,6 +83,7 @@ function(target_library_make_clap)
                 BUNDLE True
                 BUNDLE_EXTENSION clap
                 LIBRARY_OUTPUT_NAME ${TCLP_CLAP_NAME}
+                MACOSX_BUNDLE TRUE
                 MACOSX_BUNDLE_GUI_IDENTIFIER ${TCLP_CLAP_MACOS_BUNDLE_GUI_IDENTIFIER}
                 MACOSX_BUNDLE_BUNDLE_NAME ${TCLP_CLAP_NAME}
                 MACOSX_BUNDLE_BUNDLE_VERSION "${TCLP_CLAP_MACOS_BUNDLE_VERSION}"
@@ -93,8 +94,14 @@ function(target_library_make_clap)
         if (NOT ${CMAKE_GENERATOR} STREQUAL "Xcode")
             add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
                     WORKING_DIRECTORY $<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_DIRECTORY>
-                    COMMAND SetFile -a B "$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.$<TARGET_PROPERTY:${TCLP_TARGET},BUNDLE_EXTENSION>")
+                    COMMAND ${CMAKE_COMMAND} -E copy  ${CLAP_JUCE_SHIM_SOURCE}/cmake/PkgInfo
+                        "$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.$<TARGET_PROPERTY:${TCLP_TARGET},BUNDLE_EXTENSION>/Contents/")
         endif()
+        set_target_properties(${TCLP_TARGET}
+                PROPERTIES
+                MACOSX_BUNDLE TRUE
+                XCODE_ATTRIBUTE_GENERATE_PKGINFO_FILE "YES"
+                )
         if (${COPY_AFTER_BUILD})
             message(STATUS "Will copy plugin after every build" )
             set(products_folder ${CMAKE_BINARY_DIR})
