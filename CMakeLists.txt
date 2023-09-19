@@ -95,7 +95,7 @@ function(target_library_make_clap)
             add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
                     WORKING_DIRECTORY $<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_DIRECTORY>
                     COMMAND ${CMAKE_COMMAND} -E copy  ${CLAP_JUCE_SHIM_SOURCE}/cmake/PkgInfo
-                        "$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.$<TARGET_PROPERTY:${TCLP_TARGET},BUNDLE_EXTENSION>/Contents/")
+                        "$<TARGET_FILE_DIR:${TCLP_TARGET}>/../")
         endif()
         set_target_properties(${TCLP_TARGET}
                 PROPERTIES
