@@ -46,6 +46,16 @@ function(add_clap_juce_shim)
         message(FATAL_ERROR "I need clap")
     endif()
     target_link_libraries(clap_juce_shim PRIVATE clap-core juce::juce_gui_basics)
+    target_compile_definitions(clap_juce_shim PUBLIC
+        JUCE_USE_CURL=0
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CAMERA=disabled
+
+        JUCE_MODAL_LOOPS_PERMITTED=0
+        JUCE_COREGRAPHICS_DRAW_ASYNC=1
+        JUCE_DISPLAY_SPLASH_SCREEN=0
+        JUCE_REPORT_APP_USAGE=0
+    )
     add_library(sst::clap_juce_shim ALIAS clap_juce_shim)
 endfunction(add_clap_juce_shim)
 
