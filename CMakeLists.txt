@@ -28,6 +28,10 @@ function(add_clap_juce_shim)
     set(JUCE_MODULES_ONLY ON CACHE BOOL "Only use juce modules")
     add_subdirectory(${JUCE_PATH} juce_for_shim EXCLUDE_FROM_ALL)
 
+    add_library(clap_juce_shim_headers INTERFACE)
+    target_include_directories(clap_juce_shim_headers INTERFACE ${CLAP_JUCE_SHIM_SOURCE}/include)
+
+
     add_library(clap_juce_shim STATIC ${CLAP_JUCE_SHIM_SOURCE}/src/sst/clap_juce_shim/clap_juce_shim_impl.cpp)
     if (APPLE)
         target_sources(clap_juce_shim PRIVATE ${CLAP_JUCE_SHIM_SOURCE}/src/sst/clap_juce_shim/clap_juce_shim_impl.mm)
@@ -57,6 +61,7 @@ function(add_clap_juce_shim)
         JUCE_REPORT_APP_USAGE=0
     )
     add_library(sst::clap_juce_shim ALIAS clap_juce_shim)
+    add_library(sst::clap_juce_shim_headers ALIAS clap_juce_shim_headers)
 endfunction(add_clap_juce_shim)
 
 function(target_library_make_clap)
