@@ -36,20 +36,19 @@ function(add_clap_juce_shim)
     if (APPLE)
         target_sources(clap_juce_shim PRIVATE ${CLAP_JUCE_SHIM_SOURCE}/src/sst/clap_juce_shim/clap_juce_shim_impl.mm)
     endif()
-    target_include_directories(clap_juce_shim PUBLIC ${CLAP_JUCE_SHIM_SOURCE}/include)
 
     if (APPLE)
-        target_compile_definitions(clap_juce_shim PUBLIC SHIM_MAC=1)
-    elseif (LINUX)
-        target_compile_definitions(clap_juce_shim PUBLIC SHIM_LINUX=1)
+        target_compile_definitions(clap_juce_shim_headers INTERFACE SHIM_MAC=1)
+    elseif (UNIX)
+        target_compile_definitions(clap_juce_shim_headers INTERFACE SHIM_LINUX=1)
     else()
-        target_compile_definitions(clap_juce_shim PUBLIC SHIM_WINDOWS=1)
+        target_compile_definitions(clap_juce_shim_headers INTERFACE SHIM_WINDOWS=1)
     endif()
 
     if (NOT TARGET clap-core)
         message(FATAL_ERROR "I need clap")
     endif()
-    target_link_libraries(clap_juce_shim PRIVATE clap-core juce::juce_gui_basics)
+    target_link_libraries(clap_juce_shim PRIVATE clap_juce_shim_headers clap-core juce::juce_gui_basics)
     target_compile_definitions(clap_juce_shim PUBLIC
         JUCE_USE_CURL=0
         JUCE_WEB_BROWSER=0
