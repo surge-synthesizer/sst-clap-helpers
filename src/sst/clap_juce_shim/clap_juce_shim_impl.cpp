@@ -56,9 +56,12 @@ struct Implementor
 
     void destroy()
     {
-        implParent->removeAllChildren();
-        editor.reset(nullptr);
-        implParent.reset(nullptr);
+        if (guiParentAttached && implParent && editor)
+        {
+            implParent->removeAllChildren();
+            editor.reset(nullptr);
+            implParent.reset(nullptr);
+        }
     }
 
     juce::Component *comp() { return implParent.get(); }
@@ -146,7 +149,7 @@ bool ClapJuceShim::guiSetParent(const clap_window *window) noexcept
     impl->guiParentAttached = true;
 #if JUCE_MAC
     extern bool guiCocoaAttach(const clap_window *, juce::Component *);
-    auto res = guiCocoaAttach(window, impl->comp().get());
+    auto res = guiCocoaAttach(window, impl->comp());
     impl->comp()->repaint();
     return res;
 #elif JUCE_LINUX
