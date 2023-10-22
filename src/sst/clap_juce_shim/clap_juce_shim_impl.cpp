@@ -4,7 +4,6 @@
 #define JUCE_GUI_BASICS_INCLUDE_XHEADERS 1
 #include <juce_gui_basics/juce_gui_basics.h>
 
-
 #if JUCE_LINUX
 #include <juce_audio_plugin_client/detail/juce_LinuxMessageThread.h>
 #endif
@@ -139,8 +138,8 @@ void ClapJuceShim::guiDestroy() noexcept
     editorProvider->registerOrUnregisterTimer(idleTimerId, 0, false);
 #endif
 
-    impl->guiParentAttached = false;
     impl->destroy();
+    impl->guiParentAttached = false;
 }
 
 bool ClapJuceShim::guiSetParent(const clap_window *window) noexcept
