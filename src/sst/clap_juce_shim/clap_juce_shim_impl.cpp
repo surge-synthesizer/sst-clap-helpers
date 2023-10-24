@@ -31,7 +31,7 @@ struct Implementor
             {
                 auto w = getLocalBounds().getWidth();
                 auto h = getLocalBounds().getHeight();
-                getTransform().inverted().transformPoint(w, h);
+                getChildComponent(0)->getTransform().inverted().transformPoint(w, h);
                 getChildComponent(0)->setBounds(0,0, w,h);
             }
         }
@@ -221,9 +221,21 @@ bool ClapJuceShim::guiGetSize(uint32_t *width, uint32_t *height) noexcept
 
 bool ClapJuceShim::guiSetScale(double scale) noexcept {
     TRACE;
-    // SCALE SUPPORT 
-    // If you want to start supporting HDPI we turn this on and then make sure all the sizes match up
+
+    /*std::cout << "Pre guiSetScale "
+              << " D=" << impl->desktop()->getBounds().toString()
+              << " H=" << impl->edHolder()->getBounds().toString()
+              << " E=" << impl->ed()->getBounds().toString() << std::endl;
+              */
     impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
+
+    /* std::cout << "Post guiSetScale "
+              << " D=" << impl->desktop()->getBounds().toString()
+              << " H=" << impl->edHolder()->getBounds().toString()
+              << " H=" << impl->edHolder()->getBoundsInParent().toString()
+              << " E=" << impl->ed()->getBounds().toString() << std::endl; */
+
+    impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
     return true;
 }
 
