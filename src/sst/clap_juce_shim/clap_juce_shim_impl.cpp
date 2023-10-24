@@ -20,15 +20,19 @@ struct Implementor
     {
         void paint(juce::Graphics &g) override
         {
-            g.fillAll(juce::Colours::black);
+            g.fillAll(juce::Colours::pink);
         }
 
         void resized() override
         {
             jassert(getNumChildComponents() <= 1);
+
             if (getNumChildComponents() == 1)
             {
-                getChildComponent(0)->setBounds(getLocalBounds());
+                auto w = getLocalBounds().getWidth();
+                auto h = getLocalBounds().getHeight();
+                getTransform().inverted().transformPoint(w, h);
+                getChildComponent(0)->setBounds(0,0, w,h);
             }
         }
 
@@ -46,29 +50,35 @@ struct Implementor
     void setContents(std::unique_ptr<juce::Component> &c)
     {
         jassert(!editor);
-        jassert(!implParent);
+        jassert(!implDesktop);
         editor = std::move(c);
-        implParent = std::make_unique<ImplParent>();
-        implParent->addAndMakeVisible(*editor);
-        implParent->setSize(editor->getWidth(), editor->getHeight());
+        implDesktop = std::make_unique<ImplParent>();
+        implHolder = std::make_unique<ImplParent>();
+        implDesktop->addAndMakeVisible(*implHolder);
+        implHolder->addAndMakeVisible(*editor);
+        implHolder->setSize(editor->getWidth(), editor->getHeight());
+        implDesktop->setSize(editor->getWidth(), editor->getHeight());
     }
 
     void destroy()
     {
-        if (guiParentAttached && implParent && editor)
+        if (guiParentAttached && implDesktop && editor)
         {
-            implParent->removeAllChildren();
+            implDesktop->removeAllChildren();
             editor.reset(nullptr);
-            implParent.reset(nullptr);
+            implHolder.reset(nullptr);
+            implDesktop.reset(nullptr);
         }
     }
 
-    juce::Component *comp() { return implParent.get(); }
+    juce::Component *desktop() { return implDesktop.get(); }
+    juce::Component *edHolder() { return implHolder.get(); }
+    juce::Component *ed() { return editor.get(); }
 
     std::unique_ptr<juce::ScopedJuceInitialiser_GUI> guiInitializer{nullptr}; // todo deal with lifecycle
 
   protected:
-    std::unique_ptr<ImplParent> implParent{nullptr};
+    std::unique_ptr<ImplParent> implDesktop{nullptr}, implHolder{nullptr};
     std::unique_ptr<juce::Component> editor{nullptr};
 };
 } // namespace details
@@ -91,8 +101,8 @@ bool ClapJuceShim::guiSetSize(uint32_t width, uint32_t height) noexcept
 
     auto uw = static_cast<int32_t>(width), uh = static_cast<int32_t>(height);
     // SCALE SUPPORT - do we need to transform here?
-    // impl->comp()->getTransform().transformPoint(uw, uh);
-    impl->comp()->setSize(uw, uh);
+    // impl->desktop()->getTransform().transformPoint(uw, uh);
+    impl->desktop()->setSize(uw, uh);
     return true;
 }
 
@@ -128,7 +138,7 @@ bool ClapJuceShim::guiCreate(const char *api, bool isFloating) noexcept
     const juce::MessageManagerLock mmLock;
     auto ed = editorProvider->createEditor();
     impl->setContents(ed);
-    return impl->comp() != nullptr;
+    return impl->desktop() != nullptr;
 }
 
 void ClapJuceShim::guiDestroy() noexcept
@@ -148,26 +158,26 @@ bool ClapJuceShim::guiSetParent(const clap_window *window) noexcept
     impl->guiParentAttached = true;
 #if JUCE_MAC
     extern bool guiCocoaAttach(const clap_window *, juce::Component *);
-    auto res = guiCocoaAttach(window, impl->comp());
-    impl->comp()->repaint();
+    auto res = guiCocoaAttach(window, impl->desktop());
+    impl->desktop()->repaint();
     return res;
 #elif JUCE_LINUX
     const juce::MessageManagerLock mmLock;
-    impl->comp()->setVisible(false);
-    impl->comp()->addToDesktop(0, (void *)window->x11);
+    impl->desktop()->setVisible(false);
+    impl->desktop()->addToDesktop(0, (void *)window->x11);
     auto *display = juce::XWindowSystem::getInstance()->getDisplay();
     juce::X11Symbols::getInstance()->xReparentWindow(
-        display, (Window)impl->comp()->getWindowHandle(), window->x11, 0, 0);
-    impl->comp()->setVisible(true);
+        display, (Window)impl->desktop()->getWindowHandle(), window->x11, 0, 0);
+    impl->desktop()->setVisible(true);
     return true;
 
     return false;
 #elif JUCE_WINDOWS
-    impl->comp()->setVisible(false);
-    impl->comp()->setOpaque(true);
-    impl->comp()->setTopLeftPosition(0, 0);
-    impl->comp()->addToDesktop(0, (void *)window->win32);
-    impl->comp()->setVisible(true);
+    impl->desktop()->setVisible(false);
+    impl->desktop()->setOpaque(true);
+    impl->desktop()->setTopLeftPosition(0, 0);
+    impl->desktop()->addToDesktop(0, (void *)window->win32);
+    impl->desktop()->setVisible(true);
     return true;
 #else
     impl->guiParentAttached = false;
@@ -175,13 +185,13 @@ bool ClapJuceShim::guiSetParent(const clap_window *window) noexcept
 #endif
 }
 
-// Show doesn't really exist in JUCE per se. If there's an impl->comp() and its attached
+// Show doesn't really exist in JUCE per se. If there's an impl->desktop() and its attached
 // we are good.
 bool ClapJuceShim::guiShow() noexcept
 {
     TRACE;
 #if JUCE_MAC || JUCE_LINUX || JUCE_WINDOWS
-    if (impl->comp())
+    if (impl->desktop())
     {
         return impl->guiParentAttached;
     }
@@ -193,11 +203,12 @@ bool ClapJuceShim::guiGetSize(uint32_t *width, uint32_t *height) noexcept
 {
     TRACE;
     const juce::MessageManagerLock mmLock;
-    if (impl->comp())
+    if (impl->desktop())
     {
-        auto b = impl->comp()->getBounds();
+        auto b = impl->edHolder()->getBoundsInParent();
         *width = (uint32_t)b.getWidth();
         *height = (uint32_t)b.getHeight();
+
         return true;
     }
     else
@@ -212,7 +223,7 @@ bool ClapJuceShim::guiSetScale(double scale) noexcept {
     TRACE;
     // SCALE SUPPORT 
     // If you want to start supporting HDPI we turn this on and then make sure all the sizes match up
-    // impl->comp()->setTransform(juce::AffineTransform().scaled(scale));
+    impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
     return true;
 }
 
