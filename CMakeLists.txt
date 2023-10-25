@@ -116,9 +116,9 @@ function(target_library_make_clap)
                 MACOSX_BUNDLE TRUE
                 XCODE_ATTRIBUTE_GENERATE_PKGINFO_FILE "YES"
                 )
-        if (${COPY_AFTER_BUILD})
+        if (${TCLP_COPY_AFTER_BUILD})
             message(STATUS "Will copy plugin after every build" )
-            set(products_folder ${CMAKE_BINARY_DIR})
+            set(products_folder "$<TARGET_FILE_DIR:${TCLP_TARGET}>/../../..")
             add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E echo "Installing ${products_folder}/${TCLP_CLAP_NAME}.clap to ~/Library/Audio/Plug-Ins/CLAP/"
                     COMMAND ${CMAKE_COMMAND} -E make_directory "~/Library/Audio/Plug-Ins/CLAP"
@@ -127,7 +127,7 @@ function(target_library_make_clap)
         endif()
     elseif(UNIX)
         set_target_properties(${TCLP_TARGET} PROPERTIES OUTPUT_NAME ${TCLP_CLAP_NAME} SUFFIX ".clap" PREFIX "")
-        if (${COPY_AFTER_BUILD})
+        if (${TCLP_COPY_AFTER_BUILD})
             message(STATUS "Will copy plugin after every build" )
             set(products_folder ${CMAKE_BINARY_DIR})
             add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
