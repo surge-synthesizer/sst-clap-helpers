@@ -175,7 +175,8 @@ function(target_auv2_copy_after_build)
 
     if(APPLE)
         message(STATUS "Will copy auv2 plugin after every build" )
-        set(products_folder ${CMAKE_BINARY_DIR})
+        set(products_folder "$<TARGET_FILE_DIR:${TCLP_TARGET}>/../../..")
+
         add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E make_directory "~/Library/Audio/Plug-Ins/Components"
                 COMMAND ${CMAKE_COMMAND} -E echo installing "${products_folder}/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.component" "~/Library/Audio/Plug-Ins/Components/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.component"
