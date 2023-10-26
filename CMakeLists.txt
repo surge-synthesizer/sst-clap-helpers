@@ -155,7 +155,8 @@ function(target_vst3_copy_after_build)
 
     if(APPLE)
         message(STATUS "Will copy VST3 plugin after every build" )
-        set(products_folder ${CMAKE_BINARY_DIR})
+        set(products_folder "$<TARGET_FILE_DIR:${TCLP_TARGET}>/../../..")
+
         add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E echo "Installing ${products_folder}/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.vst3 to ~/Library/Audio/Plug-Ins/VST3/"
                 COMMAND ${CMAKE_COMMAND} -E make_directory "~/Library/Audio/Plug-Ins/VST3"
