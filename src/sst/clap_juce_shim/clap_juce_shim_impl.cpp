@@ -18,9 +18,23 @@ struct Implementor
 {
     struct ImplParent : juce::Component
     {
+        ImplParent()
+        {
+            setAccessible(true);
+            setTitle("Implementation Parent");
+            setFocusContainerType(juce::Component::FocusContainerType::keyboardFocusContainer);
+            setWantsKeyboardFocus(true);
+        }
+
+        std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override
+        {
+            return std::make_unique<juce::AccessibilityHandler>(*this,
+                                                                juce::AccessibilityRole::ignored);
+        }
+
         void paint(juce::Graphics &g) override
         {
-            g.fillAll(juce::Colours::pink);
+            g.fillAll(juce::Colours::black);
         }
 
         void resized() override
