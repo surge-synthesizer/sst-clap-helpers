@@ -32,10 +32,7 @@ struct Implementor
                                                                 juce::AccessibilityRole::ignored);
         }
 
-        void paint(juce::Graphics &g) override
-        {
-            g.fillAll(juce::Colours::black);
-        }
+        void paint(juce::Graphics &g) override { g.fillAll(juce::Colours::black); }
 
         void resized() override
         {
@@ -46,10 +43,9 @@ struct Implementor
                 auto w = getLocalBounds().getWidth();
                 auto h = getLocalBounds().getHeight();
                 getChildComponent(0)->getTransform().inverted().transformPoint(w, h);
-                getChildComponent(0)->setBounds(0,0, w,h);
+                getChildComponent(0)->setBounds(0, 0, w, h);
             }
         }
-
     };
 
     bool guiParentAttached{false};
@@ -89,7 +85,8 @@ struct Implementor
     juce::Component *edHolder() { return implHolder.get(); }
     juce::Component *ed() { return editor.get(); }
 
-    std::unique_ptr<juce::ScopedJuceInitialiser_GUI> guiInitializer{nullptr}; // todo deal with lifecycle
+    std::unique_ptr<juce::ScopedJuceInitialiser_GUI> guiInitializer{
+        nullptr}; // todo deal with lifecycle
 
   protected:
     std::unique_ptr<ImplParent> implDesktop{nullptr}, implHolder{nullptr};
@@ -98,8 +95,7 @@ struct Implementor
 } // namespace details
 // #define TRACE std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
 #define TRACE ;
-ClapJuceShim::ClapJuceShim(EditorProvider *ep)
-    : editorProvider(ep)
+ClapJuceShim::ClapJuceShim(EditorProvider *ep) : editorProvider(ep)
 {
     impl = std::make_unique<details::Implementor>();
 }
@@ -139,7 +135,7 @@ bool ClapJuceShim::guiCreate(const char *api, bool isFloating) noexcept
     impl->guaranteeSetup();
 #if JUCE_LINUX
     idleTimerId = 0;
-    editorProvider->registerOrUnregisterTimer(idleTimerId, 1000/50, true);
+    editorProvider->registerOrUnregisterTimer(idleTimerId, 1000 / 50, true);
 #endif
 
     impl->guiInitializer = std::make_unique<juce::ScopedJuceInitialiser_GUI>();
@@ -233,7 +229,8 @@ bool ClapJuceShim::guiGetSize(uint32_t *width, uint32_t *height) noexcept
     return false;
 }
 
-bool ClapJuceShim::guiSetScale(double scale) noexcept {
+bool ClapJuceShim::guiSetScale(double scale) noexcept
+{
     TRACE;
 
     /*std::cout << "Pre guiSetScale "
@@ -254,7 +251,8 @@ bool ClapJuceShim::guiSetScale(double scale) noexcept {
 }
 
 #if JUCE_LINUX
-void ClapJuceShim::onTimer(clap_id timerId) noexcept {
+void ClapJuceShim::onTimer(clap_id timerId) noexcept
+{
     if (timerId != idleTimerId)
         return;
 
