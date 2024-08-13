@@ -74,6 +74,7 @@ struct Implementor
     {
         if (guiParentAttached && implDesktop && editor)
         {
+            guiParentAttached = false;
             implDesktop->removeAllChildren();
             editor.reset(nullptr);
             implHolder.reset(nullptr);
@@ -93,8 +94,19 @@ struct Implementor
     std::unique_ptr<juce::Component> editor{nullptr};
 };
 } // namespace details
-// #define TRACE std::cout << __FILE__ << ":" << __LINE__ << " " << __func__ << std::endl;
+#define FLF __FILE__ << ":" << __LINE__ << " " << __func__ << " "
+
+#define DO_TRACE 0
+#if DO_TRACE
+#define TRACE std::cout << FLF << std::endl;
+#define TRACEOUT(x) std::cout << FLF << x << std::endl;
+#define SZTRACE(x) dumpSizeDebugInfo(x, __func__, __LINE__);
+#else
 #define TRACE ;
+#define TRACEOUT(x) ;
+#define SZTRACE(x) ;
+#endif
+
 ClapJuceShim::ClapJuceShim(EditorProvider *ep) : editorProvider(ep)
 {
     impl = std::make_unique<details::Implementor>();
@@ -107,12 +119,13 @@ bool ClapJuceShim::guiAdjustSize(uint32_t *w, uint32_t *h) noexcept { return tru
 
 bool ClapJuceShim::guiSetSize(uint32_t width, uint32_t height) noexcept
 {
-    TRACE;
+    TRACEOUT(" W=" << width << " H=" << height)
 
+    SZTRACE("Pre guiSetSize");
     auto uw = static_cast<int32_t>(width), uh = static_cast<int32_t>(height);
-    // SCALE SUPPORT - do we need to transform here?
-    // impl->desktop()->getTransform().transformPoint(uw, uh);
     impl->desktop()->setSize(uw, uh);
+
+    SZTRACE("Post guiSetSize");
     return true;
 }
 
@@ -181,7 +194,6 @@ bool ClapJuceShim::guiSetParent(const clap_window *window) noexcept
     impl->desktop()->setVisible(true);
     return true;
 
-    return false;
 #elif JUCE_WINDOWS
     impl->desktop()->setVisible(false);
     impl->desktop()->setOpaque(true);
@@ -203,6 +215,7 @@ bool ClapJuceShim::guiShow() noexcept
 #if JUCE_MAC || JUCE_LINUX || JUCE_WINDOWS
     if (impl->desktop())
     {
+        SZTRACE("Size at show");
         return impl->guiParentAttached;
     }
 #endif
@@ -219,6 +232,8 @@ bool ClapJuceShim::guiGetSize(uint32_t *width, uint32_t *height) noexcept
         *width = (uint32_t)b.getWidth();
         *height = (uint32_t)b.getHeight();
 
+        TRACEOUT(" W=" << *width << " H=" << *height);
+
         return true;
     }
     else
@@ -231,25 +246,30 @@ bool ClapJuceShim::guiGetSize(uint32_t *width, uint32_t *height) noexcept
 
 bool ClapJuceShim::guiSetScale(double scale) noexcept
 {
-    TRACE;
+    TRACEOUT(" scale=" << scale);
 
-    /*std::cout << "Pre guiSetScale "
-              << " D=" << impl->desktop()->getBounds().toString()
-              << " H=" << impl->edHolder()->getBounds().toString()
-              << " E=" << impl->ed()->getBounds().toString() << std::endl;
-              */
-    impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
-
-    /* std::cout << "Post guiSetScale "
-              << " D=" << impl->desktop()->getBounds().toString()
-              << " H=" << impl->edHolder()->getBounds().toString()
-              << " H=" << impl->edHolder()->getBoundsInParent().toString()
-              << " E=" << impl->ed()->getBounds().toString() << std::endl; */
-
-    impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
+#if JUCE_LINUX
+    return false;
+    // impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
+    // impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
+#else
+    guiScale = scale;
     return true;
+#endif
 }
 
+void ClapJuceShim::dumpSizeDebugInfo(const std::string &pfx, const std::string &func, int line)
+{
+    auto sf = [](const auto &tf) { return std::sqrt(std::abs(tf.getDeterminant())); };
+    std::cout << __FILE__ << ":" << line << " " << func << " " << pfx << " guiScale=" << guiScale
+              << " D=(" << impl->desktop()->getBounds().toString()
+              << " / xf = " << sf(impl->desktop()->getTransform()) << ") H=("
+              << impl->edHolder()->getBounds().toString()
+              << " / xf = " << sf(impl->edHolder()->getTransform()) << ") HIP=("
+              << impl->edHolder()->getBoundsInParent().toString() << ") E=("
+              << impl->ed()->getBounds().toString() << " / xf = " << sf(impl->ed()->getTransform())
+              << ")" << std::endl;
+}
 #if JUCE_LINUX
 void ClapJuceShim::onTimer(clap_id timerId) noexcept
 {

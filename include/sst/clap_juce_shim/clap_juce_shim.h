@@ -61,6 +61,10 @@ struct ClapJuceShim
 #endif
 
     EditorProvider *editorProvider;
+
+  private:
+    double guiScale{1.0};
+    void dumpSizeDebugInfo(const std::string &pfx, const std::string &func, int line);
 };
 } // namespace sst::clap_juce_shim
 
@@ -92,7 +96,8 @@ struct ClapJuceShim
     {                                                                                              \
         return clapJuceShim->guiGetSize(width, height);                                            \
     }                                                                                              \
-    bool guiShow() noexcept override { return clapJuceShim->guiShow(); }
+    bool guiShow() noexcept override { return clapJuceShim->guiShow() && onShow(); }               \
+    std::function<bool(void)> onShow{[]() { return true; }};
 
 #if SHIM_LINUX
 #define ADD_SHIM_LINUX_TIMER(clapJuceShim)                                                         \
