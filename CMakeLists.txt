@@ -131,9 +131,9 @@ function(target_library_make_clap)
             message(STATUS "Will copy plugin after every build" )
             set(products_folder ${CMAKE_BINARY_DIR})
             add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E echo "Installing ${products_folder}/${TCLP_TARGET}.clap to ~/.clap"
+                    COMMAND ${CMAKE_COMMAND} -E echo "Installing $<TARGET_FILE:${TCLP_TARGET}> to ~/.clap"
                     COMMAND ${CMAKE_COMMAND} -E make_directory "~/.clap"
-                    COMMAND ${CMAKE_COMMAND} -E copy "${products_folder}/${TCLP_TARGET}.clap" "~/.clap"
+                    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TCLP_TARGET}>" "~/.clap"
                     )
         endif()
 
@@ -163,7 +163,14 @@ function(target_vst3_copy_after_build)
                 COMMAND ${CMAKE_COMMAND} -E copy_directory "${products_folder}/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.vst3" "~/Library/Audio/Plug-Ins/VST3/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.vst3"
             )
     elseif(UNIX)
-        message(STATUS "Implement Copy after Build for VST3")
+        message(STATUS "Will copy VST3 plugin after every build" )
+        set(products_folder "$<TARGET_FILE_DIR:${TCLP_TARGET}>/../../..")
+
+        add_custom_command(TARGET ${TCLP_TARGET} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E echo "Installing ${products_folder}/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.vst3 to ~/.vst3"
+                COMMAND ${CMAKE_COMMAND} -E make_directory "~/Library/Audio/Plug-Ins/VST3"
+                COMMAND ${CMAKE_COMMAND} -E copy_directory "${products_folder}/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.vst3" "~/.vst3/$<TARGET_PROPERTY:${TCLP_TARGET},LIBRARY_OUTPUT_NAME>.vst3"
+        )
     endif()
 endfunction(target_vst3_copy_after_build)
 
