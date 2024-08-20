@@ -35,6 +35,13 @@ function(add_clap_juce_shim)
     if (${CMAKE_UNITY_BUILD})
         add_library(clap_juce_shim_requirements STATIC)
         target_link_libraries(clap_juce_shim_requirements PRIVATE juce::juce_gui_basics)
+        target_compile_definitions(clap_juce_shim_requirements
+                INTERFACE
+                $<TARGET_PROPERTY:clap_juce_shim_requirements,COMPILE_DEFINITIONS>)
+
+        target_include_directories(clap_juce_shim_requirements
+                INTERFACE
+                $<TARGET_PROPERTY:clap_juce_shim_requirements,INCLUDE_DIRECTORIES>)
         get_target_property(incl juce::juce_gui_basics INTERFACE_INCLUDE_DIRECTORIES)
         get_target_property(defn juce::juce_gui_basics INTERFACE_COMPILE_DEFINITIONS)
 
@@ -43,8 +50,6 @@ function(add_clap_juce_shim)
         target_compile_definitions(clap_juce_shim_requirements PUBLIC
                 ${defn}
                 JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1
-                $<IF:$<CONFIG:Debug>,DEBUG=1,NDEBUG=1>
-                $<IF:$<CONFIG:Debug>,JUCE_DEBUG=1,JUCE_DEBUG=0>
 
                 JUCE_USE_CURL=0
                 JUCE_WEB_BROWSER=0
