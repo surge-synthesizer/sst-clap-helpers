@@ -89,7 +89,6 @@ function(add_clap_juce_shim)
 
         JUCE_MODAL_LOOPS_PERMITTED=0
         JUCE_COREGRAPHICS_DRAW_ASYNC=1
-        JUCE_DISPLAY_SPLASH_SCREEN=0
         JUCE_REPORT_APP_USAGE=0
     )
     add_library(sst::clap_juce_shim ALIAS clap_juce_shim)
