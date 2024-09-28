@@ -104,7 +104,7 @@ struct ClapJuceShim
     bool implementsTimerSupport() const noexcept override { return true; }                         \
     void onTimer(clap_id timerId) noexcept override { clapJuceShim->onTimer(timerId); }
 #else
-#define ADD_SHIM_LINUX_TIMER(clapJuceShim) ;
+#define ADD_SHIM_LINUX_TIMER(clapJuceShim)
 #endif
 
 #endif // CLAP_SAW_JUICY_CLAP_JUCE_SHIM_H
