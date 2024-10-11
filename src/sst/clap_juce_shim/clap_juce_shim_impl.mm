@@ -14,10 +14,8 @@ bool guiCocoaAttach(const clap_window_t *window, juce::Component *comp)
     auto nsv = (NSView *)window->cocoa;
     @autoreleasepool
     {
-        NSView *container = [(NSView *)nsv retain];
-
         const auto defaultFlags = 0;
-        comp->addToDesktop(defaultFlags, container);
+        comp->addToDesktop(defaultFlags, nsv);
         comp->setVisible(true);
         comp->toFront(false);
 
@@ -25,4 +23,6 @@ bool guiCocoaAttach(const clap_window_t *window, juce::Component *comp)
     }
     return true;
 }
+
+bool guiCocoaDetach(const clap_window_t *window) { return true; }
 } // namespace sst::clap_juce_shim

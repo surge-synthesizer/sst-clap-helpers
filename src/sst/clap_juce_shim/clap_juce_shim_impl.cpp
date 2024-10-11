@@ -10,6 +10,8 @@
 
 #include <memory>
 
+#define FLF __FILE__ << ":" << __LINE__ << " " << __func__ << " "
+
 namespace sst::clap_juce_shim
 {
 namespace details
@@ -48,6 +50,7 @@ struct Implementor
         }
     };
 
+    const clap_window *guiParentWindow{nullptr};
     bool guiParentAttached{false};
     void guaranteeSetup()
     {
@@ -94,9 +97,8 @@ struct Implementor
     std::unique_ptr<juce::Component> editor{nullptr};
 };
 } // namespace details
-#define FLF __FILE__ << ":" << __LINE__ << " " << __func__ << " "
 
-#define DO_TRACE 0
+#define DO_TRACE 1
 #if DO_TRACE
 #define TRACE std::cout << FLF << std::endl;
 #define TRACEOUT(x) std::cout << FLF << x << std::endl;
@@ -173,12 +175,20 @@ void ClapJuceShim::guiDestroy() noexcept
 
     impl->destroy();
     impl->guiParentAttached = false;
+
+#if JUCE_MAC
+    extern bool guiCocoaDetach(const clap_window *);
+    auto res = guiCocoaDetach(impl->guiParentWindow);
+#endif
+
+    impl->guiParentWindow = nullptr;
 }
 
 bool ClapJuceShim::guiSetParent(const clap_window *window) noexcept
 {
     TRACE;
     impl->guiParentAttached = true;
+    impl->guiParentWindow = window;
 #if JUCE_MAC
     extern bool guiCocoaAttach(const clap_window *, juce::Component *);
     auto res = guiCocoaAttach(window, impl->desktop());
