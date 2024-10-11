@@ -98,7 +98,7 @@ struct Implementor
 };
 } // namespace details
 
-#define DO_TRACE 1
+#define DO_TRACE 0
 #if DO_TRACE
 #define TRACE std::cout << FLF << std::endl;
 #define TRACEOUT(x) std::cout << FLF << x << std::endl;
