@@ -12,6 +12,17 @@
 
 #define FLF __FILE__ << ":" << __LINE__ << " " << __func__ << " "
 
+#define DO_TRACE 0
+#if DO_TRACE
+#define TRACE std::cout << FLF << std::endl;
+#define TRACEOUT(x) std::cout << FLF << x << std::endl;
+#define SZTRACE(x) dumpSizeDebugInfo(x, __func__, __LINE__);
+#else
+#define TRACE ;
+#define TRACEOUT(x) ;
+#define SZTRACE(x) ;
+#endif
+
 namespace sst::clap_juce_shim
 {
 namespace details
@@ -20,10 +31,11 @@ struct Implementor
 {
     struct ImplParent : juce::Component
     {
-        ImplParent()
+        std::string displayName;
+        ImplParent(const std::string &nm) : displayName(nm)
         {
             setAccessible(true);
-            setTitle("Implementation Parent");
+            setTitle("Implementation Parent " + displayName);
             setFocusContainerType(juce::Component::FocusContainerType::keyboardFocusContainer);
             setWantsKeyboardFocus(true);
         }
@@ -44,7 +56,9 @@ struct Implementor
             {
                 auto w = getLocalBounds().getWidth();
                 auto h = getLocalBounds().getHeight();
-                getChildComponent(0)->getTransform().inverted().transformPoint(w, h);
+
+                // As we go downwards we unwind the transform
+                getTransform().inverted().transformPoint(w, h);
                 getChildComponent(0)->setBounds(0, 0, w, h);
             }
         }
@@ -65,8 +79,8 @@ struct Implementor
         jassert(!editor);
         jassert(!implDesktop);
         editor = std::move(c);
-        implDesktop = std::make_unique<ImplParent>();
-        implHolder = std::make_unique<ImplParent>();
+        implDesktop = std::make_unique<ImplParent>("Desktop");
+        implHolder = std::make_unique<ImplParent>("Holder");
         implDesktop->addAndMakeVisible(*implHolder);
         implHolder->addAndMakeVisible(*editor);
         implHolder->setSize(editor->getWidth(), editor->getHeight());
@@ -97,17 +111,6 @@ struct Implementor
     std::unique_ptr<juce::Component> editor{nullptr};
 };
 } // namespace details
-
-#define DO_TRACE 0
-#if DO_TRACE
-#define TRACE std::cout << FLF << std::endl;
-#define TRACEOUT(x) std::cout << FLF << x << std::endl;
-#define SZTRACE(x) dumpSizeDebugInfo(x, __func__, __LINE__);
-#else
-#define TRACE ;
-#define TRACEOUT(x) ;
-#define SZTRACE(x) ;
-#endif
 
 ClapJuceShim::ClapJuceShim(EditorProvider *ep) : editorProvider(ep)
 {
@@ -238,7 +241,8 @@ bool ClapJuceShim::guiGetSize(uint32_t *width, uint32_t *height) noexcept
     const juce::MessageManagerLock mmLock;
     if (impl->desktop())
     {
-        auto b = impl->edHolder()->getBoundsInParent();
+        auto b = impl->edHolder()->getBounds();
+
         *width = (uint32_t)b.getWidth();
         *height = (uint32_t)b.getHeight();
 
@@ -260,9 +264,16 @@ bool ClapJuceShim::guiSetScale(double scale) noexcept
 
 #if JUCE_LINUX
     return false;
+    // This should in theory work on linux now. Need to test it tho
     // impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
     // impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
 #else
+
+#if JUCE_WINDOWS
+    impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
+    impl->edHolder()->resized();
+    impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
+#endif
     guiScale = scale;
     return true;
 #endif
@@ -271,12 +282,13 @@ bool ClapJuceShim::guiSetScale(double scale) noexcept
 void ClapJuceShim::dumpSizeDebugInfo(const std::string &pfx, const std::string &func, int line)
 {
     auto sf = [](const auto &tf) { return std::sqrt(std::abs(tf.getDeterminant())); };
-    std::cout << __FILE__ << ":" << line << " " << func << " " << pfx << " guiScale=" << guiScale
-              << " D=(" << impl->desktop()->getBounds().toString()
-              << " / xf = " << sf(impl->desktop()->getTransform()) << ") H=("
+    std::cout << __FILE__ << ":" << line << " " << func << " " << pfx << "\n"
+              << "  guiScale=" << guiScale << "\n   Desk=("
+              << impl->desktop()->getBounds().toString()
+              << " / xf = " << sf(impl->desktop()->getTransform()) << ")\n    Hold=("
               << impl->edHolder()->getBounds().toString()
-              << " / xf = " << sf(impl->edHolder()->getTransform()) << ") HIP=("
-              << impl->edHolder()->getBoundsInParent().toString() << ") E=("
+              << " / xf = " << sf(impl->edHolder()->getTransform()) << ")\n   HoldInParent=("
+              << impl->edHolder()->getBoundsInParent().toString() << ")\n   Ed=("
               << impl->ed()->getBounds().toString() << " / xf = " << sf(impl->ed()->getTransform())
               << ")" << std::endl;
 }
