@@ -34,11 +34,14 @@ struct Implementor
         std::string displayName;
         ImplParent(const std::string &nm) : displayName(nm)
         {
+            TRACEOUT("Creating an impl parent " << displayName);
             setAccessible(true);
             setTitle("Implementation Parent " + displayName);
             setFocusContainerType(juce::Component::FocusContainerType::keyboardFocusContainer);
             setWantsKeyboardFocus(true);
         }
+
+        ~ImplParent() { TRACEOUT("DESTROYING an impl parent"); }
 
         std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override
         {
@@ -62,12 +65,16 @@ struct Implementor
                 getChildComponent(0)->setBounds(0, 0, w, h);
             }
         }
+
+        void visibilityChanged() override { TRACE; }
+        void parentHierarchyChanged() override { TRACE; }
     };
 
     const clap_window *guiParentWindow{nullptr};
     bool guiParentAttached{false};
     void guaranteeSetup()
     {
+        TRACE;
         if (!guiInitializer)
         {
             guiInitializer = std::make_unique<juce::ScopedJuceInitialiser_GUI>();
@@ -89,6 +96,7 @@ struct Implementor
 
     void destroy()
     {
+        TRACE;
         if (guiParentAttached && implDesktop && editor)
         {
             guiParentAttached = false;
@@ -190,6 +198,20 @@ void ClapJuceShim::guiDestroy() noexcept
 bool ClapJuceShim::guiSetParent(const clap_window *window) noexcept
 {
     TRACE;
+    TRACEOUT("Creating : GPA=" << impl->guiParentAttached << " GW=" << impl->guiParentWindow
+                               << " W=" << window);
+
+    if (impl->guiParentAttached && window == impl->guiParentWindow)
+    {
+        /*
+         * VCV Rack, through the VST3 wrapper in host, will not call
+         * guiDestory on windows close but it will call guiSetParent on the
+         * next time through. If that's the case our internal state will be
+         * wrong and we won't have removed ourself. So at least remove ourselves
+         * so when we reparent to our existing window we show.
+         */
+        impl->desktop()->removeFromDesktop();
+    }
     impl->guiParentAttached = true;
     impl->guiParentWindow = window;
 #if JUCE_MAC
@@ -283,9 +305,9 @@ void ClapJuceShim::dumpSizeDebugInfo(const std::string &pfx, const std::string &
 {
     auto sf = [](const auto &tf) { return std::sqrt(std::abs(tf.getDeterminant())); };
     std::cout << __FILE__ << ":" << line << " " << func << " " << pfx << "\n"
-              << "  guiScale=" << guiScale << "\n   Desk=("
+              << "   guiScale=" << guiScale << "\n   Desk=("
               << impl->desktop()->getBounds().toString()
-              << " / xf = " << sf(impl->desktop()->getTransform()) << ")\n    Hold=("
+              << " / xf = " << sf(impl->desktop()->getTransform()) << ")\n   Hold=("
               << impl->edHolder()->getBounds().toString()
               << " / xf = " << sf(impl->edHolder()->getTransform()) << ")\n   HoldInParent=("
               << impl->edHolder()->getBoundsInParent().toString() << ")\n   Ed=("
