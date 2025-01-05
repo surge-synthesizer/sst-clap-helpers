@@ -38,7 +38,7 @@ struct Implementor
             setAccessible(true);
             setTitle("Implementation Parent " + displayName);
             setFocusContainerType(juce::Component::FocusContainerType::keyboardFocusContainer);
-            setWantsKeyboardFocus(true);
+            setWantsKeyboardFocus(false);
         }
 
         ~ImplParent() { TRACEOUT("DESTROYING an impl parent"); }
