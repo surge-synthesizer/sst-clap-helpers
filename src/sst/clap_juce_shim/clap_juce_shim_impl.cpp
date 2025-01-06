@@ -37,8 +37,6 @@ struct Implementor
             TRACEOUT("Creating an impl parent " << displayName);
             setAccessible(true);
             setTitle("Implementation Parent " + displayName);
-            setFocusContainerType(juce::Component::FocusContainerType::keyboardFocusContainer);
-            setWantsKeyboardFocus(false);
         }
 
         ~ImplParent() { TRACEOUT("DESTROYING an impl parent"); }
