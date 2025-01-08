@@ -1,3 +1,16 @@
+/*
+ * sst-clap_helpers - an open source library of stuff which makes
+ * making clap easier for the Surge Synth Team.
+ *
+ * Copyright 2023-2025, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * sst-clap-helpers is released under the MIT license, as described
+ * by "LICENSE.md" in this repository.
+ *
+ * All source in sst-jucegui available at
+ * https://github.com/surge-synthesizer/sst-clap-helpers
+ */
 #include <iostream>
 #include "sst/clap_juce_shim/clap_juce_shim.h"
 

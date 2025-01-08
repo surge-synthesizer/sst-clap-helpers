@@ -65,7 +65,10 @@ function(add_clap_juce_shim)
         )
     endif()
 
-    add_library(clap_juce_shim STATIC ${CLAP_JUCE_SHIM_SOURCE}/src/sst/clap_juce_shim/clap_juce_shim_impl.cpp)
+    add_library(clap_juce_shim STATIC
+            ${CLAP_JUCE_SHIM_SOURCE}/src/sst/clap_juce_shim/clap_juce_shim_impl.cpp
+            ${CLAP_JUCE_SHIM_SOURCE}/src/sst/clap_juce_shim/menu_helper.cpp
+    )
     if (APPLE)
         target_sources(clap_juce_shim PRIVATE ${CLAP_JUCE_SHIM_SOURCE}/src/sst/clap_juce_shim/clap_juce_shim_impl.mm)
     endif()
