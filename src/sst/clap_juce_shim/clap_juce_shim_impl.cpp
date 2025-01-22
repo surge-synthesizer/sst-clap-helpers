@@ -45,7 +45,8 @@ struct Implementor
     struct ImplParent : juce::Component
     {
         std::string displayName;
-        ImplParent(const std::string &nm) : displayName(nm)
+        bool rescaleChild;
+        ImplParent(const std::string &nm, bool rsc) : displayName(nm), rescaleChild(rsc)
         {
             TRACEOUT("Creating an impl parent " << displayName);
             setAccessible(true);
@@ -71,8 +72,21 @@ struct Implementor
                 auto w = getLocalBounds().getWidth();
                 auto h = getLocalBounds().getHeight();
 
+                TRACEOUT("pre - w/h = " << w << " " << h << " " << displayName << " "
+                                        << rescaleChild);
+
                 // As we go downwards we unwind the transform
                 getTransform().inverted().transformPoint(w, h);
+
+                TRACEOUT("post - w/h = " << w << " " << h << " " << displayName << " "
+                                         << rescaleChild);
+                TRACEOUT(getChildComponent(0)->getTitle()
+                         << " xf=" << getChildComponent(0)->getTransform().getScaleFactor())
+                if (rescaleChild)
+                    getChildComponent(0)->getTransform().inverted().transformPoint(w, h);
+                TRACEOUT("postpost - w/h = " << w << " " << h << " " << displayName << " "
+                                             << rescaleChild);
+
                 getChildComponent(0)->setBounds(0, 0, w, h);
             }
         }
@@ -97,8 +111,8 @@ struct Implementor
         jassert(!editor);
         jassert(!implDesktop);
         editor = std::move(c);
-        implDesktop = std::make_unique<ImplParent>("Desktop");
-        implHolder = std::make_unique<ImplParent>("Holder");
+        implDesktop = std::make_unique<ImplParent>("Desktop", false);
+        implHolder = std::make_unique<ImplParent>("Holder", true);
         implDesktop->addAndMakeVisible(*implHolder);
         implHolder->addAndMakeVisible(*editor);
         implHolder->setSize(editor->getWidth(), editor->getHeight());
@@ -323,7 +337,8 @@ void ClapJuceShim::dumpSizeDebugInfo(const std::string &pfx, const std::string &
               << " / xf = " << sf(impl->edHolder()->getTransform()) << ")\n   HoldInParent=("
               << impl->edHolder()->getBoundsInParent().toString() << ")\n   Ed=("
               << impl->ed()->getBounds().toString() << " / xf = " << sf(impl->ed()->getTransform())
-              << ")" << std::endl;
+              << ")\n   EdInParent=(" << impl->ed()->getBoundsInParent().toString() << ")"
+              << std::endl;
 }
 #if JUCE_LINUX
 void ClapJuceShim::onTimer(clap_id timerId) noexcept
