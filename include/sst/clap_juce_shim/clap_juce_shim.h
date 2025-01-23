@@ -72,6 +72,16 @@ struct ClapJuceShim
 
     EditorProvider *editorProvider;
 
+
+    double getGuiScale() const
+    {
+#if SHIM_WINDOWS || SHIM_LINUX
+        return guiScale;
+#else
+        return 1.0; // mac is unscaled
+#endif
+    }
+
   private:
     double guiScale{1.0};
     void dumpSizeDebugInfo(const std::string &pfx, const std::string &func, int line);
