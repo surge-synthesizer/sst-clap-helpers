@@ -23,6 +23,10 @@
 
 #include <memory>
 
+#if JUCE_WINDOWS
+#include <juce_gui_basics/native/juce_WindowsHooks_windows.h>
+#endif
+
 #define FLF __FILE__ << ":" << __LINE__ << " " << __func__ << " "
 
 #define DO_TRACE 0
@@ -42,6 +46,10 @@ namespace details
 {
 struct Implementor
 {
+#if JUCE_WINDOWS
+    juce::detail::WindowsHooks hooks;
+#endif
+
     struct ImplParent : juce::Component
     {
         std::string displayName;
