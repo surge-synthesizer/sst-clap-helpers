@@ -72,7 +72,6 @@ struct ClapJuceShim
 
     EditorProvider *editorProvider;
 
-
     double getGuiScale() const
     {
 #if SHIM_WINDOWS || SHIM_LINUX
