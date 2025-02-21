@@ -77,7 +77,7 @@ bool mhAddItem(const struct clap_context_menu_builder *builder,
     case CLAP_CONTEXT_MENU_ITEM_CHECK_ENTRY:
     {
         auto it = static_cast<const clap_context_menu_check_entry_t *>(item_data);
-        currm->addItem(it->label, it->is_enabled, it->is_checked,
+        currm->addItem(juce::CharPointer_UTF8(it->label), it->is_enabled, it->is_checked,
                        [paramId = mhc->parId, host = mhc->host, id = it->action_id]() {
                            auto ext = mhGetExt(host);
                            if (ext)
