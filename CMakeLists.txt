@@ -22,11 +22,11 @@ function(add_clap_juce_shim)
     cmake_parse_arguments(JSHIM "" "${oneValueArgs}" "" ${ARGN} )
 
     if (NOT DEFINED JSHIM_JUCE_PATH)
-        message(FATAL_ERROR "sst-clap-helpers: add_clap_juce_shim requires a JUCE PATH")
+        message(FATAL_ERROR "sst-clap-helpers: add_clap_juce_shim requires a JUCE_PATH")
     endif()
 
     set(JUCE_MODULES_ONLY ON CACHE BOOL "Only use juce modules")
-    add_subdirectory(${JUCE_PATH} juce_for_shim EXCLUDE_FROM_ALL)
+    add_subdirectory(${JSHIM_JUCE_PATH} juce_for_shim EXCLUDE_FROM_ALL)
 
     add_library(clap_juce_shim_headers INTERFACE)
     target_include_directories(clap_juce_shim_headers INTERFACE ${CLAP_JUCE_SHIM_SOURCE}/include)
