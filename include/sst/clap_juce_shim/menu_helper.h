@@ -17,6 +17,8 @@
 
 #include <clap/clap.h>
 
+static_assert(__cplusplus >= 202002L, "Surge team libraries have moved to C++ 20");
+
 namespace juce
 {
 class PopupMenu;
