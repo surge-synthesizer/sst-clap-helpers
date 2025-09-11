@@ -8,7 +8,7 @@ if (APPLE)
 endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
@@ -30,6 +30,9 @@ function(add_clap_juce_shim)
 
     add_library(clap_juce_shim_headers INTERFACE)
     target_include_directories(clap_juce_shim_headers INTERFACE ${CLAP_JUCE_SHIM_SOURCE}/include)
+    if(MSVC)
+        target_compile_options(clap_juce_shim_headers INTERFACE /Zc:__cplusplus)
+    endif()
 
 
     if (${CMAKE_UNITY_BUILD})

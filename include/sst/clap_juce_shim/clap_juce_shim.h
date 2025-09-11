@@ -21,6 +21,8 @@
 #ifndef INC_CH_SST_CLAP_JUCE_SHIM_CLAP_JUCE_SHIM_H
 #define INC_CH_SST_CLAP_JUCE_SHIM_CLAP_JUCE_SHIM_H
 
+static_assert(__cplusplus >= 202002L, "Surge team libraries have moved to C++ 20");
+
 namespace juce
 {
 class Component;
