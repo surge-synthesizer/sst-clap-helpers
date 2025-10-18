@@ -405,7 +405,7 @@ void ClapJuceShim::onTimer(clap_id timerId) noexcept
 
 void ClapJuceShim::onPosixFd(int fd, clap_posix_fd_flags_t) noexcept
 {
-    juce::LinuxEventLoopInternal::invokeEventLoopCallbackForFd(fd);
+    // juce::LinuxEventLoopInternal::invokeEventLoopCallbackForFd(fd);
 }
 
 #endif
