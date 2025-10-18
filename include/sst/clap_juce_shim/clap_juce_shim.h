@@ -17,6 +17,7 @@
 #include <cstdint>
 
 #include "clap/ext/gui.h"
+#include "clap/ext/posix-fd-support.h"
 
 #ifndef INC_CH_SST_CLAP_JUCE_SHIM_CLAP_JUCE_SHIM_H
 #define INC_CH_SST_CLAP_JUCE_SHIM_CLAP_JUCE_SHIM_H
@@ -39,7 +40,13 @@ struct EditorProvider
     virtual ~EditorProvider() = default;
     virtual std::unique_ptr<juce::Component> createEditor() = 0;
     virtual bool registerOrUnregisterTimer(clap_id &, int, bool) = 0;
+    virtual bool registerOrUnregisterPosixFd(int fd, clap_posix_fd_flags_t flags, bool) = 0;
 };
+
+#if SHIM_LINUX
+struct PosixFdSupport;
+#endif
+
 struct ClapJuceShim
 {
     ClapJuceShim(EditorProvider *editorProvider);
@@ -67,8 +74,10 @@ struct ClapJuceShim
     bool guiShow() noexcept;
 
 #if SHIM_LINUX
+    std::unique_ptr<PosixFdSupport> posixFdSupport;
     clap_id idleTimerId{0};
     void onTimer(clap_id timerId) noexcept;
+    void onPosixFd(int fd, clap_posix_fd_flags_t) noexcept;
 
 #endif
 
@@ -123,7 +132,12 @@ struct ClapJuceShim
 #if SHIM_LINUX
 #define ADD_SHIM_LINUX_TIMER(clapJuceShim)                                                         \
     bool implementsTimerSupport() const noexcept override { return true; }                         \
-    void onTimer(clap_id timerId) noexcept override { clapJuceShim->onTimer(timerId); }
+    void onTimer(clap_id timerId) noexcept override { clapJuceShim->onTimer(timerId); }            \
+    bool implementsPosixFdSupport() const noexcept override { return true; }                       \
+    void onPosixFd(int fd, clap_posix_fd_flags_t flags) noexcept override                          \
+    {                                                                                              \
+        clapJuceShim->onPosixFd(fd, flags);                                                        \
+    }
 #else
 #define ADD_SHIM_LINUX_TIMER(clapJuceShim)
 #endif
