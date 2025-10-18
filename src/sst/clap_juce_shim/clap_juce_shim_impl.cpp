@@ -18,6 +18,8 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #if JUCE_LINUX
+#include <vector>
+#include <juce_events/native/juce_EventLoopInternal_linux.h>
 #include <juce_audio_plugin_client/detail/juce_LinuxMessageThread.h>
 #endif
 
@@ -153,6 +155,43 @@ struct Implementor
 };
 } // namespace details
 
+#if SHIM_LINUX
+struct PosixFdSupport : juce::LinuxEventLoopInternal::Listener
+{
+    ClapJuceShim &shim;
+    PosixFdSupport(ClapJuceShim &s) : shim(s)
+    {
+        juce::LinuxEventLoopInternal::registerLinuxEventLoopListener(*this);
+    }
+    ~PosixFdSupport()
+    {
+        juce::LinuxEventLoopInternal::deregisterLinuxEventLoopListener(*this);
+        unregisterFds();
+    }
+
+    std::vector<int> fds;
+    void fdCallbacksChanged() override
+    {
+        unregisterFds();
+        fds = juce::LinuxEventLoopInternal::getRegisteredFds();
+        for (auto &f : fds)
+        {
+            shim.editorProvider->registerOrUnregisterPosixFd(
+                f, CLAP_POSIX_FD_READ | CLAP_POSIX_FD_ERROR, true);
+        }
+    }
+
+    void unregisterFds()
+    {
+        for (auto &f : fds)
+        {
+            shim.editorProvider->registerOrUnregisterPosixFd(f, 0, false);
+        }
+        fds.clear();
+    }
+};
+#endif
+
 ClapJuceShim::ClapJuceShim(EditorProvider *ep) : editorProvider(ep)
 {
     impl = std::make_unique<details::Implementor>();
@@ -195,6 +234,8 @@ bool ClapJuceShim::guiCreate(const char *api, bool isFloating) noexcept
 #if JUCE_LINUX
     idleTimerId = 0;
     editorProvider->registerOrUnregisterTimer(idleTimerId, 1000 / 50, true);
+
+    posixFdSupport = std::make_unique<PosixFdSupport>(*this);
 #endif
 
     impl->guiInitializer = std::make_unique<juce::ScopedJuceInitialiser_GUI>();
@@ -361,6 +402,12 @@ void ClapJuceShim::onTimer(clap_id timerId) noexcept
     {
     }
 }
+
+void ClapJuceShim::onPosixFd(int fd, clap_posix_fd_flags_t) noexcept
+{
+    juce::LinuxEventLoopInternal::invokeEventLoopCallbackForFd(fd);
+}
+
 #endif
 
 } // namespace sst::clap_juce_shim
