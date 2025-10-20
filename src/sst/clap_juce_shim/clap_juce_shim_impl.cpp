@@ -177,7 +177,7 @@ struct PosixFdSupport : juce::LinuxEventLoopInternal::Listener
         for (auto &f : fds)
         {
             shim.editorProvider->registerOrUnregisterPosixFd(
-                f, CLAP_POSIX_FD_READ | CLAP_POSIX_FD_ERROR, true);
+                f, CLAP_POSIX_FD_READ | CLAP_POSIX_FD_WRITE | CLAP_POSIX_FD_ERROR, true);
         }
     }
 
@@ -405,7 +405,10 @@ void ClapJuceShim::onTimer(clap_id timerId) noexcept
 
 void ClapJuceShim::onPosixFd(int fd, clap_posix_fd_flags_t) noexcept
 {
-    // juce::LinuxEventLoopInternal::invokeEventLoopCallbackForFd(fd);
+    juce::ScopedJuceInitialiser_GUI libraryInitialiser;
+    const juce::MessageManagerLock mmLock;
+
+    juce::LinuxEventLoopInternal::invokeEventLoopCallbackForFd(fd);
 }
 
 #endif
