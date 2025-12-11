@@ -231,12 +231,6 @@ bool ClapJuceShim::guiCreate(const char *api, bool isFloating) noexcept
 {
     TRACE;
     impl->guaranteeSetup();
-#if JUCE_LINUX
-    idleTimerId = 0;
-    editorProvider->registerOrUnregisterTimer(idleTimerId, 1000 / 50, true);
-
-    posixFdSupport = std::make_unique<PosixFdSupport>(*this);
-#endif
 
     impl->guiInitializer = std::make_unique<juce::ScopedJuceInitialiser_GUI>();
     juce::ignoreUnused(api);
@@ -248,6 +242,14 @@ bool ClapJuceShim::guiCreate(const char *api, bool isFloating) noexcept
     const juce::MessageManagerLock mmLock;
     auto ed = editorProvider->createEditor();
     impl->setContents(ed);
+
+#if JUCE_LINUX
+    idleTimerId = 0;
+    editorProvider->registerOrUnregisterTimer(idleTimerId, 1000 / 50, true);
+
+    posixFdSupport = std::make_unique<PosixFdSupport>(*this);
+#endif
+
     return impl->desktop() != nullptr;
 }
 
