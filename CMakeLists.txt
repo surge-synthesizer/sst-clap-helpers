@@ -37,7 +37,7 @@ function(add_clap_juce_shim)
 
     if (${CMAKE_UNITY_BUILD})
         add_library(clap_juce_shim_requirements STATIC)
-        target_link_libraries(clap_juce_shim_requirements PRIVATE juce::juce_gui_basics)
+        target_link_libraries(clap_juce_shim_requirements PRIVATE juce::juce_gui_basics juce::juce_gui_extra)
         target_compile_definitions(clap_juce_shim_requirements
                 INTERFACE
                 $<TARGET_PROPERTY:clap_juce_shim_requirements,COMPILE_DEFINITIONS>)
@@ -45,13 +45,17 @@ function(add_clap_juce_shim)
         target_include_directories(clap_juce_shim_requirements
                 INTERFACE
                 $<TARGET_PROPERTY:clap_juce_shim_requirements,INCLUDE_DIRECTORIES>)
+
         get_target_property(incl juce::juce_gui_basics INTERFACE_INCLUDE_DIRECTORIES)
         get_target_property(defn juce::juce_gui_basics INTERFACE_COMPILE_DEFINITIONS)
 
+        get_target_property(inclxtra juce::juce_gui_extra INTERFACE_INCLUDE_DIRECTORIES)
+        get_target_property(defnxtra juce::juce_gui_extra INTERFACE_COMPILE_DEFINITIONS)
 
-        target_include_directories(clap_juce_shim_requirements PUBLIC ${incl})
+
+        target_include_directories(clap_juce_shim_requirements PUBLIC ${incl} ${inclxtra})
         target_compile_definitions(clap_juce_shim_requirements PUBLIC
-                ${defn}
+                ${defn} ${defnxtra}
                 JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1
 
                 JUCE_USE_CURL=0
@@ -61,7 +65,7 @@ function(add_clap_juce_shim)
         set_target_properties(clap_juce_shim_requirements PROPERTIES UNITY_BUILD FALSE)
     else()
         add_library(clap_juce_shim_requirements INTERFACE)
-        target_link_libraries(clap_juce_shim_requirements INTERFACE juce::juce_gui_basics)
+        target_link_libraries(clap_juce_shim_requirements INTERFACE juce::juce_gui_basics juce::juce_gui_extra)
         target_compile_definitions(clap_juce_shim_requirements INTERFACE
                 JUCE_USE_CURL=0
                 JUCE_WEB_BROWSER=0
