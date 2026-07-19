@@ -94,6 +94,7 @@ struct ClapJuceShim
 
   private:
     double guiScale{1.0};
+    void applyGuiScale() noexcept; // (re)applies guiScale to the holder transform
     void dumpSizeDebugInfo(const std::string &pfx, const std::string &func, int line);
 };
 } // namespace sst::clap_juce_shim

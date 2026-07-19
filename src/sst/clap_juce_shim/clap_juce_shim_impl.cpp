@@ -243,6 +243,12 @@ bool ClapJuceShim::guiCreate(const char *api, bool isFloating) noexcept
     auto ed = editorProvider->createEditor();
     impl->setContents(ed);
 
+    // Some hosts (e.g. Bitwig) only send set_scale when it changes, not on every
+    // create, and CLAP does not require otherwise. Re-apply a remembered scale to
+    // the freshly built holder so a second open in the same session stays scaled.
+    if (guiScale != 1.0)
+        applyGuiScale();
+
 #if JUCE_LINUX
     idleTimerId = 0;
     editorProvider->registerOrUnregisterTimer(idleTimerId, 1000 / 50, true);
@@ -356,6 +362,20 @@ bool ClapJuceShim::guiGetSize(uint32_t *width, uint32_t *height) noexcept
     return false;
 }
 
+// Applies the currently remembered guiScale to the holder transform. Split out of
+// guiSetScale so it can also run when the holder is rebuilt on a second gui open.
+void ClapJuceShim::applyGuiScale() noexcept
+{
+#if JUCE_WINDOWS
+    if (impl->edHolder() && impl->desktop())
+    {
+        impl->edHolder()->setTransform(juce::AffineTransform().scaled(guiScale));
+        impl->edHolder()->resized();
+        impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
+    }
+#endif
+}
+
 bool ClapJuceShim::guiSetScale(double scale) noexcept
 {
     TRACEOUT(" scale=" << scale);
@@ -366,13 +386,8 @@ bool ClapJuceShim::guiSetScale(double scale) noexcept
     // impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
     // impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
 #else
-
-#if JUCE_WINDOWS
-    impl->edHolder()->setTransform(juce::AffineTransform().scaled(scale));
-    impl->edHolder()->resized();
-    impl->desktop()->setBounds(impl->edHolder()->getBoundsInParent());
-#endif
     guiScale = scale;
+    applyGuiScale();
     return true;
 #endif
 }
